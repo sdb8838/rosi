@@ -1,0 +1,15 @@
+streamlit~=1.36.0
+streamlit-ldap-authenticator
+python-dotenv~=1.0.1
+langchain~=0.2.9
+langchain-community
+langchain-chroma
+langchain-mistralai
+mistralai~=0.4.2
+glpi-api
+langchain-core
+PyMuPDF
+pydantic~=2.8.2
+requests~=2.32.3
+PyYAML~=6.0.1
+ldap3~=2.9.1

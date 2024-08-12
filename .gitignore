@@ -1,0 +1,17 @@
+Pipfile
+Pipfile.lock
+.env
+.venv
+.chroma
+chroma_db
+chromadb
+__init__.py
+.idea
+.streamlit
+users.yaml
+buscarURLs.py
+PruebaBDConocimiento.py
+simple_login.py
+tstBS.py
+URLs_intranet.json
+ej.html
