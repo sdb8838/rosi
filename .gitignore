@@ -3,6 +3,10 @@ Pipfile.lock
 .env
 .venv
 .chroma
+.chroma-Azure
+.chroma-OpenAI
+.chroma-OpenAI.bk
+.chroma-Mistral
 chroma_db
 chromadb
 __init__.py

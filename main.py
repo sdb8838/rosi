@@ -1,9 +1,11 @@
-import globals
+import globales
+from backend.core import create_retrievers_and_agent
 import rosi
 from backend.core import run_llm
 from backend.core import agent_executor
 import streamlit as st
 from streamlit_ldap_authenticator import Authenticate
+
 # Declare the authentication object
 auth = Authenticate(
     st.secrets['ldap'],
@@ -18,8 +20,14 @@ if user is not None:
     auth.createLogoutForm({'message': f"Welcome {user['displayName']}"})
 
     # Your page application can be written below
-    globals.user_id = rosi.userID(user['sAMAccountName'])
-    st.header(globals.ST_HEADER)
+    globales.user_id = rosi.userID(user['sAMAccountName'])
+    st.header(globales.ST_HEADER)
+    LLM_Options=['Mistral', 'Mistral-large', 'OpenAI-35', 'OpenAI-4o-mini'] # 'AzureOpenAI'
+    modelo = st.selectbox('LLM', LLM_Options)
+    if modelo != globales.AIMODEL:
+        globales.AIMODEL = modelo
+        print(f"Nuevo modelo: {globales.AIMODEL}")
+        create_retrievers_and_agent()
     # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []

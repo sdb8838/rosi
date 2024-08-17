@@ -1,13 +1,17 @@
 import sys
-import globals
+import globales
+import os
+from dotenv import load_dotenv
 
 import glpi_api
 from langchain_core.tools import tool
 from typing import (Any, List)
 
-glpi_api_url = "https://rosi-pre.ayto-murcia.es/apirest.php"
-app_token = "V5Czl8hGj5VUeBCuIY6kkbVFrra79mA1P6mxCWyd"
-user_token="CTWvrYieqza3V6d1Nyx8MWHbSkmRVlaCprVKslNR"
+load_dotenv()
+
+glpi_api_url = os.getenv("GLPI_API_URL")
+app_token = os.getenv("GLPI_APP_TOKEN")
+user_token = os.getenv("GLPI_USER_TOKEN")
 
 COD_ID = '2'
 COD_TITULO = '1'
@@ -24,6 +28,7 @@ try:
 except glpi_api.GLPIError as err:
     print(str(err))
 
+
 glpi = glpi_api.GLPI(url=glpi_api_url,
            apptoken=app_token,
            auth=user_token)
@@ -32,9 +37,9 @@ glpi = glpi_api.GLPI(url=glpi_api_url,
 def get_tickets() ->List[Any]:
     """Devuelve los tickets en ROSI/GLPI del usuario"""
 
-    print(f"user_id:{globals.user_id}")
+    print(f"user_id:{globales.user_id}")
     busqueda = [
-        {'field': COD_SOLICITANTE, 'searchtype': 'equals', 'value': globals.user_id},
+        {'field': COD_SOLICITANTE, 'searchtype': 'equals', 'value': globales.user_id},
         {'link': 'AND', 'field': COD_ESTADO, 'searchtype': 'equals', 'value': 'notclosed'}
     ]
 
@@ -48,7 +53,7 @@ def get_tickets() ->List[Any]:
             'Título': i.get('1',''),
             'Estado': estadoGLPI[i.get('12',1)],
             'Fecha apertura': i.get('15',''),
-            'Solicitante': glpi.get_item('User', i.get('4',globals.user_id))['name'],
+            'Solicitante': glpi.get_item('User', i.get('4',globales.user_id))['name'],
             'Ubicación': i.get('83',''),
             'Descripción': i.get('21',''),
             'Categoría': i.get('7',''),
@@ -101,10 +106,10 @@ def get_ticket(ticket_id) ->List[Any]:
     ticket = glpi.get_item('Ticket', ticket_id)
     return ticket
 
+
 def get_ticket_sin_tool(ticket_id) ->List[Any]:
     ticket = glpi.get_item('Ticket', ticket_id)
     return ticket
-
 
 
 @tool
@@ -118,7 +123,7 @@ def get_PCs() ->List[Any]:
     """
 
     busqueda = [
-        {'field': '70', 'searchtype': 'equals', 'value': globals.user_id}
+        {'field': '70', 'searchtype': 'equals', 'value': globales.user_id}
     ]
     pcs = glpi.search('Computer', criteria=busqueda)
     return pcs
@@ -138,9 +143,6 @@ def user_name(user_id) ->List[Any]:
     return user_name
 
 
-
-
-
 @tool
 def add_followup(ticket_id, contenido) -> Any:
     """Añade un seguimiento con el texto 'contenido' en el ticket ticket_id
@@ -153,6 +155,7 @@ def add_followup(ticket_id, contenido) -> Any:
         }
     response = glpi.add("TicketFollowup", followup_data)
     return response[0]['id']
+
 
 def add_followup_sin_tool(ticket_id, contenido) -> Any:
     """Añade un seguimiento con el texto 'contenido' en el ticket ticket_id
@@ -176,6 +179,7 @@ def get_followups(ticket_id) -> Any:
         'ITILFollowup',
     )
     return [i['content'] for i in ticket_followups if i['is_private']==0]
+
 
 def get_KnowledgeBaseItem(kb_id) ->Any:
     """Devuelve:
@@ -214,6 +218,7 @@ def userID(login) -> Any:
     else:
         print("No se encontró el usuario con el login:", login)
 
+
 @tool
 def alta_ticket(nombre, contenido, tipo) -> Any:
     """Da de alta un ticket en ROSI/GLPI
@@ -232,11 +237,11 @@ def alta_ticket(nombre, contenido, tipo) -> Any:
         "location_id": 4, # Glorieta
         "type": tipo, # 2: Petición
         "itilcategories_id": "0",
-        "user": globals.user_id,
+        "user": globales.user_id,
         "_actors":{
             "requester": [
                 {"itemtype": "User",
-                 "items_id":globals.user_id,
+                 "items_id":globales.user_id,
                  "user_notification": 1,
                  }
             ],
@@ -257,9 +262,10 @@ def alta_ticket(nombre, contenido, tipo) -> Any:
     return response[0]['id']
 
 if __name__ == "__main__":
-    ticket=get_ticket(66193)
+    ticket=get_ticket_sin_tool(66193)
+    print(ticket)
     sys.exit()
-    globals.user_id=userID("sdb8838") #"evf6107")
+    globales.user_id=userID("sdb8838") #"evf6107")
     tickets=get_tickets()
     print(tickets)
     sys.exit()

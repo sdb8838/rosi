@@ -4,29 +4,17 @@ import logging
 from langchain.schema import Document
 from dotenv import load_dotenv
 from langchain_community.document_loaders import WebBaseLoader
-
 from langchain_chroma import Chroma
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from mistralai.client import MistralClient
-from langchain_mistralai.embeddings import MistralAIEmbeddings
-
 from rosi import glpi, get_KnowledgeBaseItem, get_ticket_sin_tool, get_tickets_sin_tool
 import fitz
 import json
+import urllib.parse
 
 import requests
+import globales
 
 load_dotenv()
-
-MISTRAL_API_KEY=os.environ["MISTRAL_API_KEY"]
-PERSIST_DIRECTORY="./.chroma"
-COLLECTION_NAME_INTRANET="rag-chroma-intranet"
-COLLECTION_NAME_ROSI="rag-chroma-ROSI"
-COLLECTION_NAME_CATEGORIES="rag-chroma-categories"
-EMBEDDING_MODEL="mistral-embed"
-
-mistral_client = MistralClient(api_key=MISTRAL_API_KEY)
-mistral_embeddings = MistralAIEmbeddings(model=EMBEDDING_MODEL, mistral_api_key=MISTRAL_API_KEY)
 
 
 def pdf_to_text(pdf_data):
@@ -63,6 +51,7 @@ def create_chroma_vectorstore(documents, embedding_function, persist_directory, 
 
 
 def cargaBDConocimientoROSI():
+    import globales
     plantilla_url = "https://rosi-pre.ayto-murcia.es/front/knowbaseitem.form.php?id="
     docs_list = []
     for i in range(1, 120):
@@ -77,11 +66,12 @@ def cargaBDConocimientoROSI():
     )
     doc_splits = text_splitter.split_documents(docs_list)
     vectorstore = create_chroma_vectorstore(
-        doc_splits, mistral_embeddings, PERSIST_DIRECTORY, COLLECTION_NAME_ROSI
+        doc_splits, globales.embeddings, globales.PERSIST_DIRECTORY, globales.COLLECTION_NAME_ROSI
     )
 
 
 def cargaIntranet():
+    import globales
     with open("URLs_Intranet.json", "r") as archivo:
         urls_encontradas = json.load(archivo)
     docs = []
@@ -95,14 +85,14 @@ def cargaIntranet():
                 pdf_data = response.content  # Obtener los datos binarios directamente de la respuesta
                 text = pdf_to_text(pdf_data)
                 # print(text)
-                docs.append([Document(
+                docs.append(Document(
                     metadata={
                         'source': url,
                         'title': url,
                         'language': 'es-ES'
                     },
                     page_content=text
-                )])
+                ))
             else:
                 print(f"Error al descargar el PDF: {response.status_code}")
         else:
@@ -114,7 +104,7 @@ def cargaIntranet():
     )
     doc_splits = text_splitter.split_documents(docs)
     vectorstore = create_chroma_vectorstore(
-        doc_splits, mistral_embeddings, PERSIST_DIRECTORY, COLLECTION_NAME_INTRANET
+        doc_splits, globales.embeddings, globales.PERSIST_DIRECTORY, globales.COLLECTION_NAME_INTRANET
     )
     return
     plantilla_url = "https://intranet.ayto-murcia.es/"
@@ -123,11 +113,20 @@ def cargaIntranet():
         "documents/44134/113357/Documentaci%C3%B3n+Formaci%C3%B3n+Gexflow+-+Tramitaci%C3%B3n+expedientes_v4.pdf/482cd744-daac-c5de-7fd8-566b8f513c30",
     ]
     urls = [plantilla_url + str(id_url) for id_url in urls_intranet]
-
-    #docs = [WebBaseLoader(url).load() for url in urls]
     docs=[]
     for url in urls:
-        if "pdf" in url.lower(): # Es un PDF
+        # obtenemos la extensión:
+        parsed_url = urllib.parse.urlparse(url)
+        path = parsed_url.path
+        indice_punto = path.rfind('.')
+        if indice_punto != -1:
+            extension = path[indice_punto + 1:]
+            indice_barra = extension.find('/')
+            extension = extension[:indice_barra].lower()
+        else:
+            extension = ""
+
+        if extension == "pdf": # Es un PDF
             response = requests.get(url)
 
             if response.status_code == 200:
@@ -151,16 +150,17 @@ def cargaIntranet():
     #docs_list = [item for sublist in docs for item in sublist]
 
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
-        chunk_size=2000, chunk_overlap=100
+        chunk_size=600, chunk_overlap=50
     )
     doc_splits = text_splitter.split_documents(docs_list)
 
     vectorstore = create_chroma_vectorstore(
-        doc_splits, mistral_embeddings, PERSIST_DIRECTORY, COLLECTION_NAME
+        doc_splits, mistral_embeddings, globales.PERSIST_DIRECTORY, globales.COLLECTION_NAME_INTRANET
     )
 
 
 def cargaTicketCategorias(fecha_inicial, fecha_final):
+    import globales
     datos_entrenamiento = get_tickets_sin_tool(fecha_inicial, fecha_final)
     print(f"Obtenidos {len(datos_entrenamiento)} documentos")
     docs=[]
@@ -184,11 +184,15 @@ def cargaTicketCategorias(fecha_inicial, fecha_final):
 
     # Crear el vectorstore de Chroma
     vectorstore = create_chroma_vectorstore(
-        docs, mistral_embeddings, PERSIST_DIRECTORY, COLLECTION_NAME_CATEGORIES
+        docs, globales.embeddings, globales.PERSIST_DIRECTORY, globales.COLLECTION_NAME_CATEGORIES
     )
 
 
 if __name__ == "__main__":
+    from backend.core import create_retrievers_and_agent
+    #for globales.AIMODEL in ['OpenAI', 'Mistral']:
+    #    create_retrievers_and_agent()
+    print(f"INGESTION DE: {globales.AIMODEL}")
     cargaTicketCategorias("2023-04-03 00:00:00", "2024-08-03 00:00:00")
-    #cargaIntranet()
-    #cargaBDConocimientoROSI()
+    #    cargaIntranet()
+    cargaBDConocimientoROSI()
