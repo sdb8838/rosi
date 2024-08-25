@@ -46,13 +46,12 @@ if user is not None:
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         if prompt:
-            with st.spinner("Generation response.."):
+            with st.spinner("Preparando respuesta.."):
                 generated_response = run_llm(query=prompt)
                 response = (
                     f"{generated_response['output']}"
                 )
                 st.session_state["chat_history"].extend([prompt, response])
-                print("Respuesta generada")
 
         # Display assistant response in chat message container
         with st.chat_message("assistant"):
