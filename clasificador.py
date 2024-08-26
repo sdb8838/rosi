@@ -18,21 +18,21 @@ from langchain_mistralai import ChatMistralAI
 from langchain_core.tools import tool, BaseTool, Tool
 
 from langchain_mistralai.embeddings import MistralAIEmbeddings
-from mistralai.client import MistralClient
+from mistralai import Mistral
 
 
 load_dotenv()
 
 
-PERSIST_DIRECTORY="./.chroma"
+PERSIST_DIRECTORY="./.chroma-Mistral"
 COLLECTION_NAME_ROSI="rag-chroma-ROSI"
-COLLECTION_NAME_CATEGORIES="rag-chroma-categories"
+COLLECTION_NAME_CATEGORIES="rag-chroma-CATEGORIES"
 api_key=os.getenv("MISTRAL_API_KEY")
 
 embeddings = MistralAIEmbeddings()
 db = Chroma(persist_directory=PERSIST_DIRECTORY, collection_name=COLLECTION_NAME_CATEGORIES, embedding_function=embeddings)
 dbROSI = Chroma(persist_directory=PERSIST_DIRECTORY, collection_name=COLLECTION_NAME_ROSI, embedding_function=embeddings)
-client = MistralClient(api_key=api_key)
+#client = Mistral(api_key=api_key)
 llm = ChatMistralAI(model="open-mistral-nemo-2407", mistral_api_key=os.getenv("MISTRAL_API_KEY"))
 
 
@@ -47,6 +47,7 @@ retriever = Chroma(
         "k": 1, # coger sólo un documento
     }
 )
+
 
 def run_llm_similarity(query: str, doc: Document):
     template = """ 
