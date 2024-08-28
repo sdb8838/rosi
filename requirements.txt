@@ -18,3 +18,4 @@ langchain-mistralai
 mistralai~=1.0.1
 azure-identity
 langchain-community
+langchain-anthropic

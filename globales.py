@@ -26,6 +26,7 @@ AZURE_CHAT_MODEL_NAME = os.getenv("AZURE_CHAT_MODEL_NAME")
 AZURE_DEPLOYMENT_NAME_EMBEDDINGS = os.getenv("AZURE_DEPLOYMENT_NAME_EMBEDDINGS")
 AZURE_OPENAI_ENDPOINT_EMBEDDINGS = os.getenv("AZURE_OPENAI_ENDPOINT_EMBEDDINGS")
 AZURE_OPENAI_API_KEY_EMBEDDINGS = os.getenv("AZURE_OPENAI_API_KEY_EMBEDDINGS")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
 
 def refresh():
@@ -41,6 +42,18 @@ def refresh():
             LLM_MODEL = "gpt-4o-mini"
         embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, model=EMBEDDING_MODEL_OPENAI)
         llm = ChatOpenAI(openai_api_key=OPENAI_API_KEY, model=LLM_MODEL)
+    elif "Claude" in AIMODEL:
+        PERSIST_DIRECTORY = "./.chroma-OpenAI"
+        from langchain_anthropic import ChatAnthropic
+        from langchain_openai import OpenAIEmbeddings
+        if AIMODEL == "Claude-3-Opus":
+            LLM_MODEL = "claude-3-opus-20240229"
+        elif AIMODEL == "Claude-3-Sonnet":
+            LLM_MODEL = "claude-3-sonnet-20240229"
+        elif AIMODEL == "Claude-3.5-Sonnet":
+            LLM_MODEL = "claude-3-5-sonnet-20240620"
+        embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY, model="text-embedding-ada-002")
+        llm = ChatAnthropic(anthropic_api_key=ANTHROPIC_API_KEY, model=LLM_MODEL)
     else:  # AIMODEL == "Mistral or Mistral-large":
         PERSIST_DIRECTORY="./.chroma-Mistral"
         from langchain_mistralai.embeddings import MistralAIEmbeddings

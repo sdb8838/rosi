@@ -22,7 +22,9 @@ if user is not None:
     # Your page application can be written below
     globales.user_id = rosi.userID(user['sAMAccountName'])
     st.header(globales.ST_HEADER)
-    LLM_Options=['Mistral', 'Mistral-large', 'OpenAI-35', 'OpenAI-4o-mini'] # 'AzureOpenAI'
+    LLM_Options=['Mistral', 'Mistral-large', 'OpenAI-35', 'OpenAI-4o-mini', 'Claude-3-Opus', 'Claude-3.5-Sonnet'] # 'AzureOpenAI'
+
+
     modelo = st.selectbox('LLM', LLM_Options)
     if modelo != globales.AIMODEL:
         globales.AIMODEL = modelo
