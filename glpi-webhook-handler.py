@@ -1,6 +1,9 @@
 from flask import Flask, request, jsonify
 import logging
 import json
+import base64
+import re
+from clasificador import clasifica_ticket
 
 app = Flask(__name__)
 
@@ -8,47 +11,30 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.route('/webhook', methods=['POST'])
+
+#def require_basic_auth(func):
+#    def decorated(*args, **kwargs):
+#        auth = request.authorization
+#        if not auth or not (auth.username == username and auth.password == password):
+#            return jsonify({'message': 'Unauthorized'}), 401
+#        return func(*args, **kwargs)
+#    return decorated
+
+@app.route('/webhook/', methods=['GET', 'POST'])
 def handle_webhook():
-    # Intentar obtener datos JSON
-    data = request.json
+    logger.info(f"entrada: {request.data} (tipo: {type(request.data)})")
 
-    # Si no hay datos JSON, intentar procesar el cuerpo como texto
-    if data is None:
-        try:
-            data = json.loads(request.data.decode('utf-8'))
-        except json.JSONDecodeError:
-            # Si falla, buscar el contenido JSON en el cuerpo del texto
-            body = request.data.decode('utf-8')
-            start = body.find('{')
-            end = body.rfind('}') + 1
-            if start != -1 and end != -1:
-                try:
-                    data = json.loads(body[start:end])
-                except json.JSONDecodeError:
-                    return jsonify({"error": "No se pudo procesar los datos recibidos"}), 400
-            else:
-                return jsonify({"error": "No se encontraron datos JSON válidos"}), 400
+    # request.data vale algo del estilo de:  b"{'ticket_id': '0000004'}"
+    cadena=request.data.decode('utf-8')
+    try:
+        data = json.loads(cadena)
+        ticket_id=data.get('ticket_id')
+        logger.info(f"Nuevo ticket: {ticket_id}")
+        clasifica_ticket(ticket_id)
+        return jsonify({'message': 'Webhook procesado exitosamente'}), 200
+    except json.JSONDecodeError:
+      return jsonify({'message': 'Error, La cadena no es un JSON válido'}), 500
 
-    # Extraer información relevante del ticket
-    ticket_id = data.get('ticket_id')
-    title = data.get('title')
-    description = data.get('description')
-    
-    # Registrar la información del ticket
-    logger.info(f"Nuevo ticket creado - ID: {ticket_id}, Título: {title}")
-    
-    # Aquí puedes agregar tu lógica personalizada para procesar el ticket
-    # Por ejemplo, podrías:
-    # - Enviar una notificación a un sistema externo
-    # - Actualizar una base de datos
-    # - Iniciar un flujo de trabajo automatizado
-    
-    # Por ahora, solo registraremos algunos detalles adicionales
-    if description:
-        logger.info(f"Descripción del ticket: {description[:100]}...")  # Primeros 100 caracteres
-    
-    return jsonify({"message": "Webhook procesado exitosamente"}), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='192.168.5.178', port=5000)

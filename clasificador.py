@@ -106,7 +106,7 @@ def clasifica_ticket(ticket_id):
 
 
 #cambia categoría al ticket 66192:
-clasifica_ticket(66192)
+clasifica_ticket('0066192')
 
 sys.exit()
 # Texto nuevo a clasificar
