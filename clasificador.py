@@ -94,7 +94,7 @@ def clasifica_ticket(ticket_id):
     resultados = dbROSI.similarity_search_with_score(texto, k=1)
     if resultados:
         documento, puntuacion_similitud = resultados[0]
-        if puntuacion_similitud >= 0.1:
+        if puntuacion_similitud >= 0.8:
             respuesta_bot = run_llm_similarity(f"Título:{ticket['name']}"
                                     f"Descripción:{ticket['content']}",
                                                documento)
