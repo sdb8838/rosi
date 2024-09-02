@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 ST_HEADER = 'Asistente ROSI'
 user_id = 'evf6107'
-AIMODEL = 'Mistral'  # Opciones: 'OpenAI', 'AzureOpenAI', 'Mistral'
+AIMODEL = 'OpenAI-4o-mini'  # Opciones: 'OpenAI', 'AzureOpenAI', 'Mistral'
 
 
 load_dotenv()
